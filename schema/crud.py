@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
-from . import  schemas
+import  schemas
 from clase import models
 from config import utils
 from config.db import SessionLocal, engine
@@ -20,19 +20,19 @@ def get_db():
 
 ## GET ##
 
-@crud.get("/users/all", response_model=list[models.UserBase], tags=["USERS"])
+@crud.get("/users/all", tags=["USERS"])
 def get_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     return db.query(schemas.User).offset(skip).limit(limit).all()
 
-@crud.get("/users/{user_id}", response_model=models.UserBase, tags=["USERS"])
+@crud.get("/users/{user_id}", tags=["USERS"])
 def get_user(user_id:int, db: Session = Depends(get_db)):
     return db.query(schemas.User).filter(schemas.User.id == user_id).first()
 
-@crud.get("/users/email/{email}", response_model=models.UserBase, tags=["USERS"])
+@crud.get("/users/email/{email}", tags=["USERS"])
 def get_user_by_email(email:str, db: Session = Depends(get_db)):
     return db.query(schemas.User).filter(schemas.User.email == email).first()
 
-@crud.get("/companies/all", response_model=list[models.CompanyBase], tags=["COMPANIES"])
+@crud.get("/companies/all", tags=["COMPANIES"])
 def get_companys(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     return db.query(schemas.Company).offset(skip).limit(limit).all()
 
@@ -48,35 +48,35 @@ def company_by_name(name: str, db: Session = Depends(get_db)):
                                             schemas.Company.commercial_name.contains(name))\
                                                 ).all()
 
-@crud.get("/movements/all", response_model=list[models.MovementBase], tags=["MOVEMENTS"])
+@crud.get("/movements/all", tags=["MOVEMENTS"])
 def get_movements(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     return db.query(schemas.Movement).offset(skip).limit(limit).all()
 
-@crud.get("/movements/{movement_id}", response_model=models.MovementBase, tags=["MOVEMENTS"])
+@crud.get("/movements/{movement_id}", tags=["MOVEMENTS"])
 def get_movement(movement_id:int, db: Session = Depends(get_db)):
     return db.query(schemas.Movement).filter(schemas.Movement.id == movement_id).first()
 
-@crud.get("/signs/all", response_model=list[models.SignBase], tags=["SIGNS"])
+@crud.get("/signs/all", tags=["SIGNS"])
 def get_signs(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     return db.query(schemas.Sign).offset(skip).limit(limit).all()
 
-@crud.get("/signs/{sign_id}", response_model=models.SignBase, tags=["SIGNS"])
+@crud.get("/signs/{sign_id}", tags=["SIGNS"])
 def get_sign(sign_id:int, db: Session = Depends(get_db)):
     return db.query(schemas.Sign).filter(schemas.Sign.id == sign_id).first()
 
-@crud.get("/signs/email/{email}", response_model=models.SignBase, tags=["SIGNS"])
+@crud.get("/signs/email/{email}", tags=["SIGNS"])
 def get_signs_by_email(email:str, db: Session = Depends(get_db)):
     return db.query(schemas.Sign, schemas.User)\
         .filter(schemas.Sign.user == schemas.User.id \
                 & schemas.User.email==email)
 
-@crud.get("/signs/company/{company_id}", response_model=models.SignBase, tags=["SIGNS"])
+@crud.get("/signs/company/{company_id}", tags=["SIGNS"])
 def get_signs_by_company(company_id:int, db: Session = Depends(get_db)):
     return db.query(schemas.Sign, schemas.User)\
         .filter(company_id == schemas.User.company \
                 & schemas.Sign.user == schemas.User.id)
 
-@crud.get("/signs/user/{user_id}", response_model=models.SignBase, tags=["SIGNS"])
+@crud.get("/signs/user/{user_id}", tags=["SIGNS"])
 def get_signs_by_company(user_id:int, db: Session = Depends(get_db)):
     return db.query(schemas.Sign, schemas.User)\
         .filter(schemas.Sign.user == user_id)

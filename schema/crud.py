@@ -1,7 +1,7 @@
+from . import schemas
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
-import  schemas
 from clase import models
 from config import utils
 from config.db import SessionLocal, engine

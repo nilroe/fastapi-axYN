@@ -78,3 +78,14 @@ class Sign(SignBase):
     id: int
     created: datetime
     updated: datetime
+
+class Login(BaseModel):
+    email: Union[str, None] = None
+    password: Union[str, None] = None
+
+class LoginCheck(BaseModel):
+    user_id : Union[int, None] = None
+    company_id : Union[int, None] = None
+
+class Token(BaseModel):
+    access_token: Union[str, None] = None

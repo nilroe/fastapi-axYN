@@ -1,9 +1,7 @@
 import hashlib
-import os;
-import sys
 
-def crypt_pass(password):
-    enc = hashlib.sha256(password.encode())
+def crypt(object):
+    enc = hashlib.sha256(object.encode())
     return enc.hexdigest();
 
-a = crypt_pass('repr0gest)')
+a = crypt('repr0gest)')

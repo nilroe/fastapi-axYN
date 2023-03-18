@@ -1,9 +1,10 @@
 from . import schemas
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import or_
+from fastapi.responses import JSONResponse
+from sqlalchemy import or_, and_
 from sqlalchemy.orm import Session
 from clase import models
-from config import utils
+from config import utils, handler
 from config.db import SessionLocal, engine
 
 
@@ -67,21 +68,34 @@ def get_sign(sign_id:int, db: Session = Depends(get_db)):
 @crud.get("/signs/email/{email}", tags=["SIGNS"])
 def get_signs_by_email(email:str, db: Session = Depends(get_db)):
     return db.query(schemas.Sign, schemas.User)\
-        .filter(schemas.Sign.user == schemas.User.id \
-                & schemas.User.email==email)
+        .filter(and_(schemas.Sign.user == schemas.User.id \
+                , schemas.User.email==email))
 
 @crud.get("/signs/company/{company_id}", tags=["SIGNS"])
 def get_signs_by_company(company_id:int, db: Session = Depends(get_db)):
     return db.query(schemas.Sign, schemas.User)\
-        .filter(company_id == schemas.User.company \
-                & schemas.Sign.user == schemas.User.id)
+        .filter(and_(company_id == schemas.User.company \
+                , schemas.Sign.user == schemas.User.id))
 
 @crud.get("/signs/user/{user_id}", tags=["SIGNS"])
 def get_signs_by_company(user_id:int, db: Session = Depends(get_db)):
     return db.query(schemas.Sign, schemas.User)\
         .filter(schemas.Sign.user == user_id)
 
+@crud.get("/tkn", tags=["LOGIN"])
+def de_token(token: str):
+    return handler.deToken(token)
 ## POST ##
+
+@crud.post("/login", tags=["LOGIN"])
+def user_login(login: models.Login, db: Session = Depends(get_db)):
+    pwd = utils.crypt(login.password)
+    log = db.query(schemas.User).filter(and_(schemas.User.email == login.email , schemas.User.hashed_password == pwd)).first()
+    if log:
+        z= handler.enToken(log.id, log.company_id)
+        return z
+    else:
+        raise HTTPException(status_code=400, detail="Invalid credentials")
 
 @crud.post("/users/post", tags=["USERS"])
 def create_user(user: models.UserCreate, db: Session = Depends(get_db)):
@@ -89,7 +103,7 @@ def create_user(user: models.UserCreate, db: Session = Depends(get_db)):
     if q:
         raise HTTPException(status_code=400, detail="An user already exists with this mail or phone")
     else:
-        pwd = utils.crypt_pass(user.password)
+        pwd = utils.crypt(user.password)
         db_user = schemas.User(email=user.email, \
                             hashed_password=pwd, \
                             name=user.name, \

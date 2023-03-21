@@ -89,3 +89,33 @@ class LoginCheck(BaseModel):
 
 class Token(BaseModel):
     access_token: Union[str, None] = None
+
+class SimpleUser(BaseModel):
+    id: int           
+    name: Union[str, None] = None
+    isActive: Union[bool, None] = None
+    created: datetime
+    updated: datetime
+    class Config:
+        orm_mode = True
+
+class SimpleLog(BaseModel):
+    id: int 
+    login: datetime
+    action: Union[str, None] = None
+    longitude: Union[str, None] = None
+    latitude: Union[str, None] = None
+    proof: Union[str, None] = None
+    class Config:
+        orm_mode = True
+
+class SimpleLogCreate(SimpleLog):
+       user: int
+
+class SimpleLogGet(SimpleLog):
+    user: Union[SimpleUser, None] = None
+
+class SimplePass(BaseModel):
+    id: int
+    token: Union[str, None] = None
+    

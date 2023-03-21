@@ -6,6 +6,36 @@ from config.db import Base
 
 
 # TABLAS #
+class SimpleUsers(Base):
+    __tablename__ = "simpleusers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(50), index=True)
+    is_active = Column(Boolean, default=True)
+    create_time = Column(DateTime, default=datetime.utcnow)
+    update_time = Column(DateTime, default=datetime.utcnow)
+
+    SimpleLogs = relationship('SimpleLogs', back_populates='User')
+
+class SimpleLogs(Base):
+    __tablename__ = "simplelogs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user = Column(Integer, ForeignKey('simpleusers.id'), nullable=False)
+    loginTime = Column(DateTime, default=datetime.utcnow)
+    action = Column(String(50), index=True)
+    proof = Column(String(2500))
+    longitude =Column(String(50))
+    latitude = Column(String(50))
+
+    User = relationship('SimpleUsers', back_populates='SimpleLogs')
+
+class SimplePass(Base):
+    __tablename__ = "simplepass"
+       
+    id = Column(Integer, primary_key=True, index=True)
+    token = Column(String(250)) 
+
 class Company(Base):
     __tablename__ = "company"
 

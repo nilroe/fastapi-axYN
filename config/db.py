@@ -7,9 +7,9 @@ url_object = URL.create(
     username="otwkyrzy_loginapp",
     password="f1anjxwGlNG87n0Xwd",
     host="sc-europe80.banahosting.com",
-    database="otwkyrzy_loginapp",
+    database="otwkyrzy_loginapp"
 )
 
-engine = create_engine(url_object)
+engine = create_engine(url_object, echo=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()

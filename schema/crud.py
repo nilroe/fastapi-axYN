@@ -1,7 +1,8 @@
 from . import schemas
-from fastapi import APIRouter, Depends, HTTPException
+import datetime
+from fastapi import APIRouter, Depends, HTTPException, Path
 from fastapi.responses import JSONResponse
-from sqlalchemy import or_, and_
+from sqlalchemy import or_, and_, text
 from sqlalchemy.orm import Session
 from clase import models
 from config import utils, handler
@@ -20,6 +21,48 @@ def get_db():
         db.close()
 
 ## GET ##
+
+@crud.get('/getusers', tags=["SIMPLE"])
+def get_users(db: Session = Depends(get_db)):
+    return db.query(schemas.SimpleUsers).all()
+
+@crud.get('/getuser/{userid}', tags=["SIMPLE"])
+def get_users(userid:int, db: Session = Depends(get_db)):
+    return db.query(schemas.SimpleUsers).filter(schemas.SimpleUsers.id == userid).first()
+
+@crud.get('/getlogs', tags=["SIMPLE"])
+def get_logs(db: Session = Depends(get_db)):
+    return db.query(schemas.SimpleLogs).all()
+
+@crud.get('/getlogs/{userapi}', tags=["SIMPLE"])
+def get_logs(userapi:str, db: Session = Depends(get_db)):
+    userapi = "%{}%".format(userapi)
+    usu = db.query(schemas.SimpleUsers).filter(schemas.SimpleUsers.name.like(userapi)).first()
+    if usu:
+        return db.query(schemas.SimpleLogs).filter(schemas.SimpleLogs.user == usu.id).all()
+
+
+@crud.get('/getlogs/date/{datefrom}/{dateto}', tags=["SIMPLE"])
+def get_logs(datefrom:str, dateto:str, db: Session = Depends(get_db)):
+    y = text("Select y.name, l.* from simplelogs l inner join simpleusers y on l.user=y.id where cast(l.logintime as date) between cast(:df as date) and cast(:dt as date) order by l.logintime")
+    args = {'df' : datefrom, 'dt': dateto}
+    result = db.execute(y, args)     
+    r = result.mappings().all()
+    return r
+
+@crud.get('/getlogs/dates/{userapi}/{datefrom}/{dateto}', tags=["SIMPLE"])
+def get_logs(userapi:str, datefrom:str, dateto:str, db: Session = Depends(get_db)):
+    y = text("Select y.name, l.* from simplelogs l inner join simpleusers y on l.user=y.id where cast(l.logintime as date) between cast(:df as date) and cast(:dt as date) and name like :userapi order by l.logintime")
+    userapi = "%{}%".format(userapi)
+    args = {'df' : datefrom, 'dt': dateto, 'userapi':userapi}
+    result = db.execute(y, args)     
+    r = result.mappings().all()
+    return r
+
+@crud.get('/pass/{token}', tags=["SIMPLE"])
+def check_pass(token:str, db: Session = Depends(get_db)):
+    pwd = utils.crypt(token)
+    return db.query(schemas.SimplePass).filter(schemas.SimplePass.token == pwd).first()
 
 @crud.get("/users/all", tags=["USERS"])
 def get_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
@@ -85,7 +128,33 @@ def get_signs_by_company(user_id:int, db: Session = Depends(get_db)):
 @crud.get("/tkn", tags=["LOGIN"])
 def de_token(token: str):
     return handler.deToken(token)
+
+
 ## POST ##
+@crud.post("/changepass/{token}", tags=["SIMPLE"])
+def change_pass(token: str, db: Session = Depends(get_db)):
+    pwd = utils.crypt(token)
+    db_pwd = schemas.SimplePass(token=pwd)
+    db.add(db_pwd)
+    db.commit()
+    db.refresh(db_pwd)
+    return db_pwd
+
+@crud.post("/user", tags=["SIMPLE"])
+def create_user(user: models.SimpleUser, db: Session = Depends(get_db)):
+    db_user = schemas.SimpleUsers(name = user.name, is_active = user.isActive, create_time = user.created, update_time = user.updated)
+    db.add(db_user)
+    db.commit()           
+    db.refresh(db_user)           
+    return db_user
+
+@crud.post("/logs", tags=["SIMPLE"])
+def create_log(log: models.SimpleLogCreate, db: Session = Depends(get_db)):
+    db_log = schemas.SimpleLogs(user = log.user, action = log.action, loginTime = log.login, longitude=log.longitude, latitude=log.latitude, proof=log.proof)
+    db.add(db_log)
+    db.commit()           
+    db.refresh(db_log)           
+    return db_log
 
 @crud.post("/login", tags=["LOGIN"])
 def user_login(login: models.Login, db: Session = Depends(get_db)):

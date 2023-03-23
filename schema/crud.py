@@ -26,6 +26,10 @@ def get_db():
 def get_users(db: Session = Depends(get_db)):
     return db.query(schemas.SimpleUsers).all()
 
+@crud.get('/getuserbyname/{username}', tags=["SIMPLE"])
+def get_users(username:str, db: Session = Depends(get_db)):
+    return db.query(schemas.SimpleUsers).filter(schemas.SimpleUsers.name == username).all()
+
 @crud.get('/getuser/{userid}', tags=["SIMPLE"])
 def get_users(userid:int, db: Session = Depends(get_db)):
     return db.query(schemas.SimpleUsers).filter(schemas.SimpleUsers.id == userid).first()

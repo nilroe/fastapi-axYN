@@ -2,7 +2,7 @@ from . import schemas
 import datetime
 from fastapi import APIRouter, Depends, HTTPException, Path
 from fastapi.responses import JSONResponse
-from sqlalchemy import or_, and_, text
+from sqlalchemy import or_, and_, text, case
 from sqlalchemy.orm import Session
 from clase import models
 from config import utils, handler
@@ -45,6 +45,13 @@ def get_logs(userapi:str, db: Session = Depends(get_db)):
     if usu:
         return db.query(schemas.SimpleLogs).filter(schemas.SimpleLogs.user == usu.id).all()
 
+@crud.get('/getnextmovementbyuser/{userid}', tags=["SIMPLE"])
+def get_users(userid:int, db: Session = Depends(get_db)):
+    y = text("select (case when action = :2 then :1 else :2 end) as action from simplelogs where user = :userid order by id desc limit 1")
+    args = {'userid': userid, '1': "ENTRADA", '2': "SALIDA"}
+    res= db.execute(y, args)
+    r = res.mappings().all()
+    return r
 
 @crud.get('/getlogs/date/{datefrom}/{dateto}', tags=["SIMPLE"])
 def get_logs(datefrom:str, dateto:str, db: Session = Depends(get_db)):

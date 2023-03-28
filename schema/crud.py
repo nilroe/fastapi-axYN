@@ -26,6 +26,14 @@ def get_db():
 def get_users(db: Session = Depends(get_db)):
     return db.query(schemas.SimpleUsers).all()
 
+@crud.get('/getuserswithlastmove', tags=["SIMPLE"])
+def get_users(db: Session = Depends(get_db)):
+    y = text("SELECT s.id, s.NAME, ifnull((SELECT l.ACTION FROM simplelogs l WHERE l.user=s.id ORDER BY l.id DESC LIMIT 1), :q) AS move FROM simpleusers s")
+    args = {"q": "SALIDA"}
+    res= db.execute(y, args)
+    r = res.mappings().all()
+    return r
+
 @crud.get('/getuserbyname/{username}', tags=["SIMPLE"])
 def get_users(username:str, db: Session = Depends(get_db)):
     return db.query(schemas.SimpleUsers).filter(schemas.SimpleUsers.name == username).all()

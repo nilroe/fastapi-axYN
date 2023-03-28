@@ -40,10 +40,11 @@ def get_logs(db: Session = Depends(get_db)):
 
 @crud.get('/getlogs/{userapi}', tags=["SIMPLE"])
 def get_logs(userapi:str, db: Session = Depends(get_db)):
-    userapi = "%{}%".format(userapi)
-    usu = db.query(schemas.SimpleUsers).filter(schemas.SimpleUsers.name.like(userapi)).first()
-    if usu:
-        return db.query(schemas.SimpleLogs).filter(schemas.SimpleLogs.user == usu.id).all()
+    y = text("SELECT s.id, s.NAME, ifnull((SELECT l.ACTION FROM simplelogs l WHERE l.user=s.id ORDER BY l.id DESC LIMIT 1), :q) AS move FROM simpleusers s where s.name = :z")
+    args = {"q": "SALIDA", "z": userapi}
+    res= db.execute(y, args)
+    r = res.mappings().all()
+    return r
 
 @crud.get('/getnextmovementbyuser/{userid}', tags=["SIMPLE"])
 def get_users(userid:int, db: Session = Depends(get_db)):

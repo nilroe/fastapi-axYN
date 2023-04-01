@@ -103,6 +103,7 @@ class SimpleLog(BaseModel):
     id: int 
     login: datetime
     action: Union[str, None] = None
+    comment: Union[str, None] = None
     longitude: Union[str, None] = None
     latitude: Union[str, None] = None
     proof: Union[str, None] = None

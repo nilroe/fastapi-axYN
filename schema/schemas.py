@@ -24,6 +24,7 @@ class SimpleLogs(Base):
     user = Column(Integer, ForeignKey('simpleusers.id'), nullable=False)
     loginTime = Column(DateTime, default=datetime.utcnow)
     action = Column(String(50), index=True)
+    comment = Column(String(2500))
     proof = Column(String(2500))
     longitude =Column(String(50))
     latitude = Column(String(50))

@@ -2,7 +2,7 @@ from . import schemas
 import datetime
 from fastapi import APIRouter, Depends, HTTPException, Path
 from fastapi.responses import JSONResponse
-from sqlalchemy import or_, and_, text, case
+from sqlalchemy import or_, and_, text, case, update
 from sqlalchemy.orm import Session
 from clase import models
 from config import utils, handler
@@ -85,14 +85,17 @@ def check_pass(token:str, db: Session = Depends(get_db)):
     return db.query(schemas.SimplePass).filter(schemas.SimplePass.token == pwd).first()
 
 ## POST ##
-@crud.post("/changepass/{token}", tags=["SIMPLE"])
-def change_pass(token: str, db: Session = Depends(get_db)):
-    pwd = utils.crypt(token)
-    db_pwd = schemas.SimplePass(token=pwd)
-    db.add(db_pwd)
-    db.commit()
-    db.refresh(db_pwd)
-    return db_pwd
+@crud.post("/changepass/{tkn}/{nwtkn}", tags=["SIMPLE"])
+def change_pass(tkn: str, nwtkn:str, db: Session = Depends(get_db)):
+    pwd = utils.crypt(tkn)
+    npwd = utils.crypt(nwtkn)
+    usu = db.query(schemas.SimplePass).filter(schemas.SimplePass.token == pwd)
+    if usu.count() == 1:
+        usu.update({'token': npwd})
+        db.commit()
+        return {"status": "Password Changed"}
+    else:
+            return {"status": "Error in Password"}
 
 @crud.post("/user", tags=["SIMPLE"])
 def create_user(user: models.SimpleUser, db: Session = Depends(get_db)):

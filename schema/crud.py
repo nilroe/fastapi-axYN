@@ -84,6 +84,33 @@ def check_pass(token:str, db: Session = Depends(get_db)):
     pwd = utils.crypt(token)
     return db.query(schemas.SimplePass).filter(schemas.SimplePass.token == pwd).first()
 
+@crud.get('/dashboard/all', tags=["DASHBOARD"])
+def get_dashboard_all(db: Session = Depends(get_db)):
+    y = text("SELECT s.usuario \
+		,(SELECT CONCAT(FLOOR(SUM(minutos)/60),'h ',MOD(SUM(minutos),60),'m') AS Shift FROM shift_statistics z WHERE z.usuario=s.usuario AND fecha = cast(NOW() AS DATE)-1) AS 'DIA_ANTERIOR' \
+		,(SELECT CONCAT(FLOOR(SUM(minutos)/60),'h ',MOD(SUM(minutos),60),'m') AS Shift FROM shift_statistics z WHERE z.usuario=s.usuario AND semana = WEEK(NOW()) AND anyo=YEAR(NOW())) AS 'SEMANA_ACTUAL' \
+		,(SELECT CONCAT(FLOOR(SUM(minutos)/60),'h ',MOD(SUM(minutos),60),'m') AS Shift FROM shift_statistics z WHERE z.usuario=s.usuario AND semana = WEEK(NOW())-1 AND anyo=YEAR(NOW())) AS 'SEMANA_ANTERIOR' \
+		,(SELECT CONCAT(FLOOR(SUM(minutos)/60),'h ',MOD(SUM(minutos),60),'m') AS Shift FROM shift_statistics z WHERE z.usuario=s.usuario AND mes = MONTH(NOW()) AND anyo=YEAR(NOW())) AS 'MES_ACTUAL' \
+		,(SELECT CONCAT(FLOOR(SUM(minutos)/60),'h ',MOD(SUM(minutos),60),'m') AS Shift FROM shift_statistics z WHERE z.usuario=s.usuario AND mes = MONTH(NOW())-1 AND anyo=YEAR(NOW())) AS 'MES_ANTERIOR' \
+        FROM shift_statistics s\
+        GROUP BY s.usuario ")
+    result = db.execute(y)
+    r = result.mappings().all()
+    return r
+
+@crud.get('/dashboard/{usu}/{datefrom}/{dateto}', tags=["DASHBOARD"])
+def get_user_dash(usu:str, datefrom:str, dateto:str, db: Session = Depends(get_db)):
+    y = text("SELECT s.usuario, \
+                CONCAT(FLOOR(SUM(minutos)/60),'h ',MOD(SUM(minutos),60),'m') AS horas \
+            FROM shift_statistics s \
+            WHERE usuario = :q \
+                AND fecha BETWEEN :df AND :dt\
+            GROUP BY s.usuario ")
+    args = {'q':usu, 'df':datefrom, 'dt':dateto}
+    result = db.execute(y, args)     
+    r = result.mappings().all()
+    return r
+
 ## POST ##
 @crud.post("/changepass/{tkn}/{nwtkn}", tags=["SIMPLE"])
 def change_pass(tkn: str, nwtkn:str, db: Session = Depends(get_db)):

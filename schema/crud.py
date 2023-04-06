@@ -26,6 +26,18 @@ def get_db():
 def get_users(db: Session = Depends(get_db)):
     return db.query(schemas.SimpleUsers).all()
 
+@crud.get('/getusers/active', tags=["SIMPLE"])
+def get_users(db: Session = Depends(get_db)):
+    y = text("select s.name from simpleusers s where is_active=1")
+    return db.execute(y).mappings().all()
+    #return db.query(schemas.SimpleUsers).where(schemas.SimpleUsers.is_active==1).all()
+
+@crud.get('/getusers/inactive', tags=["SIMPLE"])
+def get_users(db: Session = Depends(get_db)):
+    y = text("select s.name from simpleusers s where is_active=0")
+    return db.execute(y).mappings().all()
+    #return db.query(schemas.SimpleUsers).where(schemas.SimpleUsers.is_active==0).all()
+
 @crud.get('/getuserswithlastmove', tags=["SIMPLE"])
 def get_users(db: Session = Depends(get_db)):
     y = text("SELECT s.id, s.name, ifnull((SELECT l.action FROM simplelogs l WHERE l.user=s.id and action <> :z ORDER BY l.id DESC LIMIT 1), :q) AS move, (SELECT l.loginTime FROM simplelogs l WHERE l.user=s.id and action <> :z ORDER BY l.id DESC LIMIT 1) as LoginTime FROM simpleusers s where is_active=1")
@@ -100,8 +112,8 @@ def get_dashboard_all(db: Session = Depends(get_db)):
 		,IFNULL((SELECT CONCAT(FLOOR(SUM(minutos)/60),'h ',MOD(SUM(minutos),60),'m') AS Shift FROM shift_statistics z WHERE z.usuario=s.name AND semana = WEEK(NOW())-1 AND anyo=YEAR(NOW())),'N/A') AS 'SEMANA_ANTERIOR'  \
 		,IFNULL((SELECT CONCAT(FLOOR(SUM(minutos)/60),'h ',MOD(SUM(minutos),60),'m') AS Shift FROM shift_statistics z WHERE z.usuario=s.name AND mes = MONTH(NOW()) AND anyo=YEAR(NOW())),'N/A') AS 'MES_ACTUAL'  \
 		,IFNULL((SELECT CONCAT(FLOOR(SUM(minutos)/60),'h ',MOD(SUM(minutos),60),'m') AS Shift FROM shift_statistics z WHERE z.usuario=s.name AND mes = MONTH(NOW())-1 AND anyo=YEAR(NOW())),'N/A') AS 'MES_ANTERIOR ' \
-        FROM simpleusers s  where is_active=1\
-        GROUP BY s.name ")  
+        FROM simpleusers s  where is_active=1 \
+        GROUP BY s.name")  
     result = db.execute(y)
     r = result.mappings().all()
     return r
@@ -131,6 +143,26 @@ def change_pass(tkn: str, nwtkn:str, db: Session = Depends(get_db)):
         return {"status": "Password Changed"}
     else:
             return {"status": "Error in Password"}
+    
+@crud.post("/disable/{userapi}", tags=["SIMPLE"])
+def disable_user(userapi: str, db: Session = Depends(get_db)):
+    usu = db.query(schemas.SimpleUsers).filter(schemas.SimpleUsers.name == userapi)
+    if usu.count() >= 1:
+        usu.update({'is_active': 0})
+        db.commit()
+        return {"status": "User Disabled"}
+    else:
+            return {"status": "Error in Disable"}
+    
+@crud.post("/enable/{userapi}", tags=["SIMPLE"])
+def enable_user(userapi: str, db: Session = Depends(get_db)):
+    usu = db.query(schemas.SimpleUsers).filter(schemas.SimpleUsers.name == userapi)
+    if usu.count() >= 1:
+        usu.update({'is_active': 1})
+        db.commit()
+        return {"status": "User Enabled"}
+    else:
+            return {"status": "Error in Enable"}
 
 @crud.post("/user", tags=["SIMPLE"])
 def create_user(user: models.SimpleUser, db: Session = Depends(get_db)):

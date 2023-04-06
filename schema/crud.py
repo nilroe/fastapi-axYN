@@ -1,5 +1,5 @@
 from . import schemas
-import datetime
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Path
 from fastapi.responses import JSONResponse
 from sqlalchemy import or_, and_, text, case, update
@@ -162,15 +162,23 @@ def enable_user(userapi: str, db: Session = Depends(get_db)):
         db.commit()
         return {"status": "User Enabled"}
     else:
-            return {"status": "Error in Enable"}
+            return {"status": "Error Enabling User"}
 
-@crud.post("/user", tags=["SIMPLE"])
-def create_user(user: models.SimpleUser, db: Session = Depends(get_db)):
-    db_user = schemas.SimpleUsers(name = user.name, is_active = user.isActive, create_time = user.created, update_time = user.updated)
-    db.add(db_user)
-    db.commit()           
-    db.refresh(db_user)           
-    return db_user
+@crud.post("/user/{usr}", tags=["SIMPLE"])
+def create_user(usr: str, db: Session = Depends(get_db)):
+    y = text('select s.name from simpleusers s where s. name=:q')
+    args = {'q':usr}
+    result = db.execute(y, args)     
+    r = result.mappings().all()
+    if(r):
+            return {"status": "ERROR - User already exists"}
+    else:
+        now = datetime.today()
+        db_user = schemas.SimpleUsers(name = usr, is_active = True, create_time = now, update_time = now)
+        db.add(db_user)
+        db.commit()           
+        db.refresh(db_user)           
+        return db_user
 
 @crud.post("/logs", tags=["SIMPLE"])
 def create_log(log: models.SimpleLogCreate, db: Session = Depends(get_db)):

@@ -76,7 +76,7 @@ def get_users(userid:int, db: Session = Depends(get_db)):
 
 @crud.get('/getlogs/date/{datefrom}/{dateto}', tags=["SIMPLE"])
 def get_logs(datefrom:str, dateto:str, db: Session = Depends(get_db)):
-    y = text("Select y.name, l.* from simplelogs l inner join simpleusers y on l.user=y.id where cast(l.logintime as date) between cast(:df as date) and cast(:dt as date) order by l.logintime")
+    y = text("Select y.name, l.* from simplelogs l left join simpleusers y on l.user=y.id where cast(l.logintime as date) between cast(:df as date) and cast(:dt as date) order by l.logintime")
     args = {'df' : datefrom, 'dt': dateto}
     result = db.execute(y, args)     
     r = result.mappings().all()

@@ -187,3 +187,15 @@ def create_log(log: models.SimpleLogCreate, db: Session = Depends(get_db)):
     db.commit()           
     db.refresh(db_log)           
     return db_log
+
+@crud.post("/logs/addnewempty", tags=["SIMPLE"])
+def create_empty_log(db: Session = Depends(get_db)):
+  db.add(schemas.SimpleLogs())
+  db.commit()
+  return db.query(schemas.SimpleLogs).order_by(schemas.SimpleLogs.id.desc()).first()
+
+@crud.delete("/logs/delete/{logid}", tags=["SIMPLE"])
+def delete_log(log: int, db: Session = Depends(get_db)):
+    db.query(schemas.SimpleLogs).filter(schemas.SimpleLogs.id == log).delete() 
+    db.commit() 
+    return {"status": "Log Deleted"} 

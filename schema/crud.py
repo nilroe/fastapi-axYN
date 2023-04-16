@@ -199,3 +199,14 @@ def delete_log(log: int, db: Session = Depends(get_db)):
     db.query(schemas.SimpleLogs).filter(schemas.SimpleLogs.id == log).delete() 
     db.commit() 
     return {"status": "Log Deleted"} 
+
+@crud.put("/logs/update", tags=["SIMPLE"])
+def update_log( log: models.SimpleLogCreate, db: Session = Depends(get_db)):
+    db_log = db.query(schemas.SimpleLogs).filter(schemas.SimpleLogs.id == log.id).first() 
+    if db_log: 
+        stm = update(schemas.SimpleLogs).where(schemas.SimpleLogs.id==log.id).values(user = log.user, action = log.action, comment= log.comment, loginTime = log.login, longitude=log.longitude, latitude=log.latitude, proof=log.proof)
+        db.execute(stm)
+        db.commit() 
+        return db_log 
+    else: 
+        return {"status": "ERROR - Log not found"}

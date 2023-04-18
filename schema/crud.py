@@ -22,6 +22,13 @@ def get_db():
 
 ## GET ##
 
+@crud.get('/logs/nextid', tags=["SIMPLE"])
+def get_last_id(db: Session = Depends(get_db)):
+    y = text("select max(id)+1 as id from simplelogs")
+    resp = db.execute(y)
+    r = resp.mappings().all()
+    return r
+
 @crud.get('/getusers', tags=["SIMPLE"])
 def get_users(db: Session = Depends(get_db)):
     return db.query(schemas.SimpleUsers).all()

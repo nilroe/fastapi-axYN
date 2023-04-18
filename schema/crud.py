@@ -197,7 +197,8 @@ def create_log(log: models.SimpleLogCreate, db: Session = Depends(get_db)):
 
 @crud.post("/logs/addnewempty", tags=["SIMPLE"])
 def create_empty_log(db: Session = Depends(get_db)):
-  db.add(schemas.SimpleLogs())
+  now = datetime.today()
+  db.add(schemas.SimpleLogs(loginTime = now))
   db.commit()
   return db.query(schemas.SimpleLogs).order_by(schemas.SimpleLogs.id.desc()).first()
 

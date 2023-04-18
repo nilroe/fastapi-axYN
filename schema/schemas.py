@@ -21,7 +21,7 @@ class SimpleLogs(Base):
     __tablename__ = "simplelogs"
 
     id = Column(Integer, primary_key=True, index=True)
-    user = Column(Integer, ForeignKey('simpleusers.id'), nullable=False)
+    user = Column(Integer, ForeignKey('simpleusers.id'))
     loginTime = Column(DateTime, default=datetime.utcnow)
     action = Column(String(50), index=True)
     comment = Column(String(2500))

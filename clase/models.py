@@ -111,7 +111,7 @@ class SimpleLog(BaseModel):
         orm_mode = True
 
 class SimpleLogCreate(SimpleLog):
-       user: int
+       user: Union[int, None] = None
 
 class SimpleLogGet(SimpleLog):
     user: Union[SimpleUser, None] = None

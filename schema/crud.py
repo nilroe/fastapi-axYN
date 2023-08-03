@@ -189,11 +189,19 @@ def create_user(usr: str, db: Session = Depends(get_db)):
 
 @crud.post("/logs", tags=["SIMPLE"])
 def create_log(log: models.SimpleLogCreate, db: Session = Depends(get_db)):
-    db_log = schemas.SimpleLogs(user = log.user, action = log.action, comment= log.comment, loginTime = log.login, longitude=log.longitude, latitude=log.latitude, proof=log.proof)
-    db.add(db_log)
-    db.commit()           
-    db.refresh(db_log)           
-    return db_log
+    y = text('select loginTime from simplelogs where user=:q and logintime BETWEEN :t-INTERVAL 90 SECOND AND :t+INTERVAL 1 minute and action=:a')
+    args = {'q':log.user, 't':log.login, 'a':log.action}
+    res = db.execute(y,args)
+    r = res.mappings().all()
+
+    if r:
+        return {"status": "duplicate entry"}
+    else:
+        db_log = schemas.SimpleLogs(user = log.user, action = log.action, comment= log.comment, loginTime = log.login, longitude=log.longitude, latitude=log.latitude, proof=log.proof)
+        db.add(db_log)
+        db.commit()           
+        db.refresh(db_log)           
+        return db_log
 
 @crud.post("/logs/addnewempty", tags=["SIMPLE"])
 def create_empty_log(db: Session = Depends(get_db)):

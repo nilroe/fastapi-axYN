@@ -197,7 +197,8 @@ def create_log(log: models.SimpleLogCreate, db: Session = Depends(get_db)):
     if r:
         return {"status": "duplicate entry"}
     else:
-        db_log = schemas.SimpleLogs(user = log.user, action = log.action, comment= log.comment, loginTime = log.login, longitude=log.longitude, latitude=log.latitude, proof=log.proof)
+        comm = utils.removeacccents(log.comment)
+        db_log = schemas.SimpleLogs(user = log.user, action = log.action, comment= comm, loginTime = log.login, longitude=log.longitude, latitude=log.latitude, proof=log.proof)
         db.add(db_log)
         db.commit()           
         db.refresh(db_log)           

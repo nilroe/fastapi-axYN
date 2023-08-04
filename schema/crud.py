@@ -197,12 +197,27 @@ def create_log(log: models.SimpleLogCreate, db: Session = Depends(get_db)):
     if r:
         return {"status": "duplicate entry"}
     else:
-        comm = utils.removeacccents(log.comment)
-        db_log = schemas.SimpleLogs(user = log.user, action = log.action, comment= comm, loginTime = log.login, longitude=log.longitude, latitude=log.latitude, proof=log.proof)
-        db.add(db_log)
-        db.commit()           
-        db.refresh(db_log)           
-        return db_log
+        m = text('select action from simplelogs where user=:q order by id desc limit 1')
+        margs ={'q':log.user}
+        mres = db.execute(m, margs)
+        mr = mres.fetchone()
+        if mr:
+            if mr[0] == log.action:
+                return {"status": "invalid entry"}
+            else:
+                comm = utils.removeacccents(log.comment)
+                db_log = schemas.SimpleLogs(user = log.user, action = log.action, comment= comm, loginTime = log.login, longitude=log.longitude, latitude=log.latitude, proof=log.proof)
+                db.add(db_log)
+                db.commit()           
+                db.refresh(db_log)           
+                return db_log
+        else:
+                comm = utils.removeacccents(log.comment)
+                db_log = schemas.SimpleLogs(user = log.user, action = log.action, comment= comm, loginTime = log.login, longitude=log.longitude, latitude=log.latitude, proof=log.proof)
+                db.add(db_log)
+                db.commit()           
+                db.refresh(db_log)           
+                return db_log
 
 @crud.post("/logs/addnewempty", tags=["SIMPLE"])
 def create_empty_log(db: Session = Depends(get_db)):

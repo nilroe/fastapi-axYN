@@ -83,7 +83,7 @@ def get_users(userid:int, db: Session = Depends(get_db)):
 
 @crud.get('/getlogs/date/{datefrom}/{dateto}', tags=["SIMPLE"])
 def get_logs(datefrom:str, dateto:str, db: Session = Depends(get_db)):
-    y = text("Select y.name, l.* from simplelogs l left join simpleusers y on l.user=y.id where cast(l.logintime as date) between cast(:df as date) and cast(:dt as date) order by l.logintime")
+    y = text("Select y.name, l.* from simplelogs l left join simpleusers y on l.user=y.id where cast(l.logintime as date) between cast(:df as date) and cast(:dt as date) order by l.id desc")
     args = {'df' : datefrom, 'dt': dateto}
     result = db.execute(y, args)     
     r = result.mappings().all()
@@ -106,12 +106,21 @@ def check_pass(token:str, db: Session = Depends(get_db)):
 @crud.get('/dashboard/all', tags=["DASHBOARD"])
 def get_dashboard_all(db: Session = Depends(get_db)):
     y = text("SELECT s.name AS usuario \
+		,IFNULL((select action from simplelogs y WHERE y.user=s.id order by id desc LIMIT 1),'N/A') AS 'ULTIMO_MOVIMIENTO' \
+		,IFNULL( \
+			if( \
+				(select action from simplelogs y WHERE y.user=s.id order by id desc LIMIT 1)='ENTRADA' \
+					,(SELECT CONCAT((FLOOR(SUM(minutos)/60)+(SELECT floor(time_to_sec(TIMEDIFF(NOW(),logintime))/60/60) FROM simplelogs x WHERE x.USER=s.id ORDER BY x.id DESC LIMIT 1)),'h ' \
+						,MOD(SUM(minutos+(SELECT floor(time_to_sec(TIMEDIFF(NOW(),logintime))/60)FROM simplelogs x WHERE x.USER=s.id ORDER BY x.id DESC LIMIT 1)),60),'m') AS Shift FROM shift_statistics z WHERE z.usuario=s.name AND fecha = cast(NOW() AS DATE)) \
+					,(SELECT CONCAT(FLOOR(SUM(minutos)/60),'h ',MOD(SUM(minutos),60),'m') AS Shift FROM shift_statistics z WHERE z.usuario=s.name AND fecha = cast(NOW() AS DATE)) \
+					) \
+			,'N/A') AS 'HOY' \
 		,IFNULL( \
 		(CASE WHEN WEEKDAY(NOW())=1  \
-			THEN \
+			THEN  \
 			(SELECT CONCAT(FLOOR(SUM(minutos)/60),'h ',MOD(SUM(minutos),60),'m') AS Shift FROM shift_statistics z WHERE z.usuario=s.name AND fecha = cast(NOW() AS DATE)-3)  \
 			ELSE \
-			(SELECT CONCAT(FLOOR(SUM(minutos)/60),'h ',MOD(SUM(minutos),60),'m') AS Shift FROM shift_statistics z WHERE z.usuario=s.name AND fecha = cast(NOW() AS DATE)-1) \
+			(SELECT CONCAT(FLOOR(SUM(minutos)/60),'h ',MOD(SUM(minutos),60),'m') AS Shift FROM shift_statistics z WHERE z.usuario=s.name AND fecha = cast(NOW() AS DATE)-1)  \
 			END) \
 		,'N/A')  \
 		AS 'DIA_ANTERIOR'  \
@@ -127,12 +136,7 @@ def get_dashboard_all(db: Session = Depends(get_db)):
 
 @crud.get('/dashboard/{usu}/{datefrom}/{dateto}', tags=["DASHBOARD"])
 def get_user_dash(usu:str, datefrom:str, dateto:str, db: Session = Depends(get_db)):
-    y = text("SELECT u.name AS usuario, \
-                    IFNULL((SELECT CONCAT(FLOOR(SUM(minutos)/60),'h ',MOD(SUM(minutos),60),'m') FROM shift_statistics s WHERE s.usuario=u.name AND fecha BETWEEN :df AND :dt) \
-                        ,'N/A') AS horas \
-             FROM simpleusers u \
-             WHERE u.name = :q \
-             GROUP BY u.name")
+    y = text("CALL getcurrentwork(:q, :df, :dt)")
     args = {'q':usu, 'df':datefrom, 'dt':dateto}
     result = db.execute(y, args)     
     r = result.mappings().all()

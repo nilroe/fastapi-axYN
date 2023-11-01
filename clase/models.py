@@ -120,3 +120,17 @@ class SimplePass(BaseModel):
     id: int
     token: Union[str, None] = None
     
+
+
+class FoodBase(BaseModel):
+
+    descripcion: Union[str, None] = None
+    precio: Union[str, None] = None
+    imagen: Union[str, None] = None
+    detalle: Union[str, None] = None
+    active: Union[bool, None] = None
+    gluten: Union[bool, None] = None
+    lactosa: Union[bool, None] = None
+    class Config:
+        orm_mode = True
+

@@ -246,3 +246,12 @@ def update_log( log: models.SimpleLogCreate, db: Session = Depends(get_db)):
         return db_log 
     else: 
         return {"status": "ERROR - Log not found"}
+    
+
+
+
+## GET FOODS ##
+
+@crud.get('/food/getAll', tags=["FOODS"])
+def get_foods(db: Session = Depends(get_db)):
+    return db.query(schemas.Food).all()    

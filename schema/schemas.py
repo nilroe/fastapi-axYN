@@ -95,3 +95,20 @@ class Sign(Base):
 
     User = relationship('User', back_populates='Sign')
     Movement = relationship('Movement', back_populates='Sign')
+
+class Food(Base):
+    __tablename__ = "foods"
+
+    id = Column(Integer, primary_key=True, index=True)
+    descripcion = Column(String(250))
+    precio = Column(String(50))
+    imagen = Column(String(999999))
+    detalle = Column(String(5000))
+    disponible = Column(Boolean, default=True)
+    gluten = Column(Boolean, default=False)
+    lactosa = Column(Boolean, default=False)
+    fecha_alta = Column(DateTime, default=datetime.utcnow)
+    fecha_modificacion = Column(DateTime, default=datetime.utcnow)
+
+
+
